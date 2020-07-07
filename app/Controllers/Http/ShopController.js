@@ -1,6 +1,11 @@
 'use strict'
 
 const Shop = use('App/Models/Shop')
+const Helpers = use('Helpers')
+const fs = use('fs')
+const readFile = Helpers.promisify(fs.readFile)
+const deleteFile = Helpers.promisify(fs.unlink)
+const uploadDir = 'uploads'
 
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
@@ -130,7 +135,51 @@ class ShopController {
         //return shop 
   }
 
-  
+  async changePhoto({params, request, response}) {
+    const photo = request.file('file', {
+        maxSize: '2mb',
+        allowedExtensions: ['jpg', 'png', 'webP', 'jpeg']
+    })
+    
+    if (!photo) {
+        response.status(400).json({error: 'File required'})
+        return
+    }
+
+    
+    const shop = await Shop.findOrFail(params.id)
+    //deleta a foto anterior se existir uma
+    try {       
+        await deleteFile(Helpers.resourcesPath(shop.logo))
+    } catch (err) {
+        console.log("Não há fotos para excluir", err)
+    }
+    const name = `${shop.id}/${photo.clientName.split('.')[0]}.${photo.extname}`
+
+    await photo.move(Helpers.resourcesPath(uploadDir), {
+        name,
+        overwrite: true
+    })
+
+    if(!photo.moved()) {
+        response.status(400).json({'error': photo.error()})
+    }
+
+    shop.logo = `${uploadDir}/${name}`
+
+    await shop.save()
+
+    return shop
+  }
+
+  async photo({params, response}) {
+
+      const shop = await Shop.findOrFail(params.id)
+      const content = await readFile(Helpers.resourcesPath(shop.logo))
+
+      response.header('Content-type', 'image/*').send(content)
+  }
+
 
 }
 

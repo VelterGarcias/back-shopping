@@ -43,3 +43,6 @@ Route.get('/auths/profile','AuthController.profile')
 
 Route.post('/admin/users/:id/uploads', 'UserController.changePhoto')
 Route.get('/admin/users/:id/photo', 'UserController.photo')
+
+Route.post('/admin/shops/:id/uploads', 'ShopController.changePhoto')
+Route.get('/admin/shops/:id/photo', 'ShopController.photo')
