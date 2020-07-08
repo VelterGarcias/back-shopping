@@ -135,10 +135,10 @@ class ShopController {
         //return shop 
   }
 
-  async changePhoto({params, request, response}) {
+  async changeLogo({params, request, response}) {
     const photo = request.file('file', {
-        maxSize: '2mb',
-        allowedExtensions: ['jpg', 'png', 'webP', 'jpeg']
+        size: '2mb',
+        extnames: ['jpg', 'png', 'webP', 'jpeg']
     })
     
     if (!photo) {
@@ -148,12 +148,7 @@ class ShopController {
 
     
     const shop = await Shop.findOrFail(params.id)
-    //deleta a foto anterior se existir uma
-    try {       
-        await deleteFile(Helpers.resourcesPath(shop.logo))
-    } catch (err) {
-        console.log("Não há fotos para excluir", err)
-    }
+    
     const name = `${shop.id}/${photo.clientName.split('.')[0]}.${photo.extname}`
 
     await photo.move(Helpers.resourcesPath(uploadDir), {
@@ -163,22 +158,150 @@ class ShopController {
 
     if(!photo.moved()) {
         response.status(400).json({'error': photo.error()})
+    } else {
+
+        //deleta a foto anterior se existir uma
+        try {       
+          await deleteFile(Helpers.resourcesPath(shop.logo))
+        } catch (err) {
+          console.log("Não há fotos para excluir")
+        }
+
+        shop.logo = `${uploadDir}/${name}`
+
+        await shop.save()
+  
+        return shop
     }
 
-    shop.logo = `${uploadDir}/${name}`
-
-    await shop.save()
-
-    return shop
+    
   }
 
-  async photo({params, response}) {
+  async logo({params, response}) {
 
       const shop = await Shop.findOrFail(params.id)
       const content = await readFile(Helpers.resourcesPath(shop.logo))
 
       response.header('Content-type', 'image/*').send(content)
   }
+
+  async changePhoto({params, request, response}) {
+    const photo = request.file('file', {
+        size: '2mb',
+        extnames: ['jpg', 'png', 'webP', 'jpeg']
+    })
+    
+    if (!photo) {
+        response.status(400).json({error: 'File required'})
+        return
+    }
+
+    
+    const shop = await Shop.findOrFail(params.id)
+    const oldExtName = shop.photo1 ? shop.photo1.split('.')[1] : null
+    const name = `shops/${shop.id}/photo${params.photoId}.${photo.extname}`
+
+    await photo.move(Helpers.resourcesPath(uploadDir), {
+        name,
+        overwrite: true
+    })
+
+    if(!photo.moved()) {
+        response.status(400).json({'error': photo.error()})
+    } else {       
+        //deleta a foto anterior se existir uma
+        switch (params.photoId) {
+          case "1":
+            if (oldExtName != photo.extname) {
+              try {       
+                  await deleteFile(Helpers.resourcesPath(shop.photo1))
+              } catch (err) {
+                  console.log("Não há fotos para excluir", err)
+              }
+            }
+            shop.photo1 = `${uploadDir}/${name}`
+            break;
+
+          case "2":
+            if (oldExtName != photo.extname) {
+              try {       
+                  await deleteFile(Helpers.resourcesPath(shop.photo2))
+              } catch (err) {
+                  console.log("Não há fotos para excluir", err)
+              }
+            }
+            shop.photo2 = `${uploadDir}/${name}`
+            break;
+
+          case "3":
+            if (oldExtName != photo.extname) {
+              try {       
+                  await deleteFile(Helpers.resourcesPath(shop.photo3))
+              } catch (err) {
+                  console.log("Não há fotos para excluir", err)
+              }
+            }
+            shop.photo3 = `${uploadDir}/${name}`
+            break;
+
+          case "4":
+            if (oldExtName != photo.extname) {
+              try {       
+                  await deleteFile(Helpers.resourcesPath(shop.photo4))
+              } catch (err) {
+                  console.log("Não há fotos para excluir", err)
+              }
+            }
+            shop.photo4 = `${uploadDir}/${name}`
+            break;
+
+          case "5":
+            if (oldExtName != photo.extname) {
+              try {       
+                  await deleteFile(Helpers.resourcesPath(shop.photo5))
+              } catch (err) {
+                  console.log("Não há fotos para excluir", err)
+              }
+            }
+            shop.photo5 = `${uploadDir}/${name}`
+            break;       
+        }
+        
+        await shop.save()
+  
+        return shop
+    }
+
+    
+  } 
+
+  async photo({params, response}) {
+
+    const shop = await Shop.findOrFail(params.id)
+    let content = null
+    switch (params.photoId) {
+      case "1":
+        content = await readFile(Helpers.resourcesPath(shop.photo1))
+        break;
+      case "2":
+        content = await readFile(Helpers.resourcesPath(shop.photo2))
+        break;
+      case "3":
+        content = await readFile(Helpers.resourcesPath(shop.photo3))
+        break;
+      case "4":
+        content = await readFile(Helpers.resourcesPath(shop.photo4))
+        break;
+      case "5":
+        content = await readFile(Helpers.resourcesPath(shop.photo5))
+        break;   
+      default:
+        response.status(400).json({'error': 'parâmetro inválido'})
+        break;
+    }
+
+    response.header('Content-type', 'image/*').send(content)
+}
 
 
 }
