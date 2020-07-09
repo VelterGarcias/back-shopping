@@ -265,6 +265,16 @@ class ShopController {
             }
             shop.photo5 = `${uploadDir}/${name}`
             break;       
+          case "6":
+            if (oldExtName != photo.extname) {
+              try {       
+                  await deleteFile(Helpers.resourcesPath(shop.photo6))
+              } catch (err) {
+                  console.log("Não há fotos para excluir", err)
+              }
+            }
+            shop.photo6 = `${uploadDir}/${name}`
+            break;  
         }
         
         await shop.save()
@@ -295,6 +305,9 @@ class ShopController {
       case "5":
         content = await readFile(Helpers.resourcesPath(shop.photo5))
         break;   
+      case "6":
+        content = await readFile(Helpers.resourcesPath(shop.photo6))
+        break;
       default:
         response.status(400).json({'error': 'parâmetro inválido'})
         break;
@@ -303,6 +316,72 @@ class ShopController {
     response.header('Content-type', 'image/*').send(content)
 }
 
+async deletePhoto({params, response}) {
+
+  const shop = await Shop.findOrFail(params.id)
+  let data = null
+  
+  switch (params.photoId) {
+    case "1":
+      data = { "photo1": null }
+      try {       
+          await deleteFile(Helpers.resourcesPath(shop.photo1))
+      } catch (err) {
+          console.log("Não há fotos para excluir", err)
+      }
+      break;
+    case "2":
+      data = { "photo2": null }
+      try {       
+          await deleteFile(Helpers.resourcesPath(shop.photo2))
+      } catch (err) {
+          console.log("Não há fotos para excluir", err)
+      }
+      break;
+    case "3":
+      data = { "photo3": null }
+      try {       
+          await deleteFile(Helpers.resourcesPath(shop.photo3))
+      } catch (err) {
+          console.log("Não há fotos para excluir", err)
+      }
+      break;
+    case "4":
+      data = { "photo4": null }
+      try {       
+          await deleteFile(Helpers.resourcesPath(shop.photo4))
+      } catch (err) {
+          console.log("Não há fotos para excluir", err)
+      }
+      break;
+    case "5":
+      data = { "photo5": null }
+      try {       
+          await deleteFile(Helpers.resourcesPath(shop.photo5))
+      } catch (err) {
+          console.log("Não há fotos para excluir", err)
+      }
+      break;   
+    case "6":
+      data = { "photo6": null }
+      try {       
+          await deleteFile(Helpers.resourcesPath(shop.photo6))
+      } catch (err) {
+          console.log("Não há fotos para excluir", err)
+      }
+      break; 
+    default:
+      response.status(400).json({'error': "O parâmetro informado não existe"})
+      break;
+  }
+
+  shop.merge(data)
+
+  //executando no MySQL
+  await shop.save()
+
+  return shop
+}
 
 }
 

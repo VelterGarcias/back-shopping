@@ -41,9 +41,11 @@ Route.post('/auths', 'AuthController.store')
 
 Route.get('/auths/profile','AuthController.profile')
 
-Route.post('/admin/users/:id/uploads', 'UserController.changePhoto')
-Route.get('/admin/users/:id/photo', 'UserController.logo')
+Route.put('/admin/users/:id/uploads', 'UserController.changePhoto')
+Route.get('/admin/users/:id/photo', 'UserController.photo')
 
+Route.get('/admin/shops/:id/photo', 'ShopController.logo')
 Route.put('/admin/shops/:id/uploads', 'ShopController.changeLogo')
 Route.put('/admin/shops/:id/uploads/:photoId', 'ShopController.changePhoto')
 Route.get('/admin/shops/:id/photo/:photoId', 'ShopController.photo')
+Route.delete('/admin/shops/:id/photo/:photoId', 'ShopController.deletePhoto')
