@@ -281,8 +281,6 @@ class ShopController {
   
         return shop
     }
-
-    
   } 
 
   async photo({params, response}) {
@@ -379,6 +377,14 @@ async deletePhoto({params, response}) {
 
   //executando no MySQL
   await shop.save()
+
+  return shop
+}
+
+async showWhere({ params }) {
+  //console.log(params)
+  //função que retorna valores no DB "where" tem um valor específico
+  const shop = await Shop.query().where('category', params.query).andWhere('isOnline', true).fetch()
 
   return shop
 }
