@@ -382,10 +382,15 @@ async deletePhoto({params, response}) {
 }
 
 async showWhere({ params }) {
-  //console.log(params)
+  //console.log("chegou aqui",params)
   //função que retorna valores no DB "where" tem um valor específico
-  const shop = await Shop.query().where('category', params.query).andWhere('isOnline', true).fetch()
-
+  let shop = null
+  if (params.query == 'all') {
+    //shop = await Shop.query().where('isOnline', true).orderBy('name','asc').fetch()
+    shop = await Shop.query().orderBy('name','asc').fetch()
+  } else {
+    shop = await Shop.query().where('category', params.query).andWhere('isOnline', true).orderBy('name','asc').fetch()
+  }
   return shop
 }
 
