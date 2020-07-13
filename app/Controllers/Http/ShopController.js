@@ -149,7 +149,7 @@ class ShopController {
     
     const shop = await Shop.findOrFail(params.id)
     
-    const name = `${shop.id}/${photo.clientName.split('.')[0]}.${photo.extname}`
+    const name = `shops/${shop.id}/${photo.clientName.split('.')[0]}.${photo.extname}`
 
     await photo.move(Helpers.resourcesPath(uploadDir), {
         name,

@@ -18,6 +18,16 @@ class UserController {
         return {user, token}
     }
 
+    async newUser ({ request , auth}) {
+        const data = request.only(['name', 'email', 'photo', 'birth_at', 'level', 'password'])
+
+        const user = await User.create(data)
+        const token = await auth.attempt(user.email, data.password)
+        
+
+        return {user, token}
+    }
+
     async index() {
         return await User.all()
     }
@@ -98,12 +108,6 @@ class UserController {
         response.header('Content-type', 'image/*').send(content)
     }
 
-    // async showWhere({ params }) {
-    //     //função que retorna valores no DB "where" tem um valor específico
-    //     const user = await User.query().where('level', params.id).fetch()
-
-    //     return user
-    // }
 
 }
 

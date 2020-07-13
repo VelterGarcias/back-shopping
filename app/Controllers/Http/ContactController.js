@@ -51,6 +51,14 @@ class ContactController {
     return contact
   }
 
+  async newContact ({ request }) {
+    const data = request.only(['name', 'phone','email', 'message', 'answered'])
+
+    const contact = await Contact.create(data)
+
+    return contact
+  }
+
   /**
    * Display a single contact.
    * GET contacts/:id

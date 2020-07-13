@@ -8,8 +8,10 @@ class ShopsSchema extends Schema {
     this.create('shops', (table) => {
       table.increments()
       table.string('name', 254).notNullable()
-      table.string('description',254)
+      table.text('description')
+      table.text('long_description')
       table.string('category',254).notNullable()
+      table.string('sub_category',254)
       table.string('adress',254).notNullable()
       table.string('phone',254)
       table.string('smartphone',254)
