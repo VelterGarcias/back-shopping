@@ -1,10 +1,11 @@
 'use strict'
 const User = use('App/Models/User')
-const Helpers = use('Helpers')
-const fs = use('fs')
-const readFile = Helpers.promisify(fs.readFile)
-const deleteFile = Helpers.promisify(fs.unlink)
-const uploadDir = 'uploads'
+// const Helpers = use('Helpers')
+// const fs = use('fs')
+// const readFile = Helpers.promisify(fs.readFile)
+// const deleteFile = Helpers.promisify(fs.unlink)
+// const uploadDir = 'uploads'
+const Drive = use('Drive')
 
 class UserController {
 
@@ -63,49 +64,91 @@ class UserController {
 
     }
 
-    async changePhoto({params, request, response}) {
-        const photo = request.file('file', {
-            maxSize: '2mb',
-            allowedExtensions: ['jpg', 'png', 'webP', 'jpeg']
-        })
+    // async changePhoto({params, request, response}) {
+    //     const photo = request.file('file', {
+    //         maxSize: '2mb',
+    //         allowedExtensions: ['jpg', 'png', 'webP', 'jpeg']
+    //     })
         
-        if (!photo) {
-            response.status(400).json({error: 'File required'})
-            return
-        }
+    //     if (!photo) {
+    //         response.status(400).json({error: 'File required'})
+    //         return
+    //     }
 
+        
+    //     const user = await User.findOrFail(params.id)
+    //     //deleta a foto anterior se existir uma
+    //     try {       
+    //         await deleteFile(Helpers.resourcesPath(user.photo))
+    //     } catch (err) {
+    //         console.log("Não há fotos para excluir", err)
+    //     }
+    //     const name = `${user.id}/${photo.clientName.split('.')[0]}.${photo.extname}`
+
+    //     await photo.move(Helpers.resourcesPath(uploadDir), {
+    //         name,
+    //         overwrite: true
+    //     })
+
+    //     if(!photo.moved()) {
+    //         response.status(400).json({'error': photo.error()})
+    //     }
+
+    //     user.photo = `${uploadDir}/${name}`
+
+    //     await user.save()
+
+    //     return user
+    // }
+
+    async changePhoto({params, request, response}) {
         
         const user = await User.findOrFail(params.id)
-        //deleta a foto anterior se existir uma
-        try {       
-            await deleteFile(Helpers.resourcesPath(user.photo))
-        } catch (err) {
-            console.log("Não há fotos para excluir", err)
-        }
-        const name = `${user.id}/${photo.clientName.split('.')[0]}.${photo.extname}`
+        const folder = 'uploads';
+        
+        request.multipart.file('file', {
+            size: '1mb',
+            extnames: ['jpg', 'png', 'webP', 'jpeg'] 
+        }, async file => {
+        await Drive.put(`${folder}/users/${params.id}/avatar-${params.id}`, file.stream, {
+            ACL: 'public-read',
+            ContentType: `${file.type}/${file.subtype}`,
+        });
+        });
 
-        await photo.move(Helpers.resourcesPath(uploadDir), {
-            name,
-            overwrite: true
-        })
+        await request.multipart.process();
 
-        if(!photo.moved()) {
-            response.status(400).json({'error': photo.error()})
-        }
-
-        user.photo = `${uploadDir}/${name}`
+        user.photo = `avatar-${params.id}`
 
         await user.save()
 
         return user
     }
 
+    // async photo({params, response}) {
+
+    //     const user = await User.findOrFail(params.id)
+    //     const content = await readFile(Helpers.resourcesPath(user.photo))
+
+    //     response.header('Content-type', 'image/*').send(content)
+    // }
+
     async photo({params, response}) {
 
         const user = await User.findOrFail(params.id)
-        const content = await readFile(Helpers.resourcesPath(user.photo))
+        const folder = `uploads/users/${params.id}`;
 
-        response.header('Content-type', 'image/*').send(content)
+        const exists = await Drive.exists(`${folder}/${user.photo}`)
+        if (exists) {
+            response.implicitEnd = false
+            response.header('Content-type', 'image/*')
+
+            const stream = await Drive.getStream(`${folder}/${user.photo}`)
+
+            stream.pipe(response.response)
+        } else {
+            return response.status(400).json({'error': "O parâmetro informado não existe"})
+        }
     }
 
 

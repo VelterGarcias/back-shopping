@@ -1,11 +1,12 @@
 'use strict'
 
 const Cinema = use('App/Models/Cinema')
-const Helpers = use('Helpers')
-const fs = use('fs')
-const readFile = Helpers.promisify(fs.readFile)
-const deleteFile = Helpers.promisify(fs.unlink)
-const uploadDir = 'uploads/cinema'
+// const Helpers = use('Helpers')
+// const fs = use('fs')
+// const readFile = Helpers.promisify(fs.readFile)
+// const deleteFile = Helpers.promisify(fs.unlink)
+// const uploadDir = 'uploads/cinema'
+const Drive = use('Drive')
 
 /** @typedef {import('@adonisjs/framework/src/Request')} Request */
 /** @typedef {import('@adonisjs/framework/src/Response')} Response */
@@ -124,53 +125,45 @@ class CinemaController {
 
   
   async changePoster({params, request, response}) {
-    const photo = request.file('file', {
-        size: '2mb',
-        extnames: ['jpg', 'png', 'webP', 'jpeg']
-    })
-    
-    if (!photo) {
-        response.status(400).json({error: 'File required'})
-        return
-    }
 
-    
     const cinema = await Cinema.findOrFail(params.id)
-    
-    const name = `${cinema.id}/${photo.clientName.split('.')[0]}.${photo.extname}`
+        const folder = 'uploads';
+        
+        request.multipart.file('file', {
+            size: '1mb',
+            extnames: ['jpg', 'png', 'webP', 'jpeg'] 
+        }, async file => {
+        await Drive.put(`${folder}/cinema/${params.id}/poster`, file.stream, {
+            ACL: 'public-read',
+            ContentType: `${file.type}/${file.subtype}`,
+        });
+        });
 
-    await photo.move(Helpers.resourcesPath(uploadDir), {
-        name,
-        overwrite: true
-    })
+        await request.multipart.process();
 
-    if(!photo.moved()) {
-        response.status(400).json({'error': photo.error()})
-    } else {
-
-        //deleta a foto anterior se existir uma
-        try {       
-          await deleteFile(Helpers.resourcesPath(cinema.photo))
-        } catch (err) {
-          console.log("Não há fotos para excluir")
-        }
-
-        cinema.photo = `${uploadDir}/${name}`
+        cinema.photo = `poster`
 
         await cinema.save()
-  
-        return cinema
-    }
 
-    
+        return cinema
   }
 
   async poster({params, response}) {
 
-      const cinema = await Cinema.findOrFail(params.id)
-      const content = await readFile(Helpers.resourcesPath(cinema.photo))
+    const cinema = await Cinema.findOrFail(params.id)
+    const folder = `uploads/cinema/${params.id}`;
 
-      response.header('Content-type', 'image/*').send(content)
+    const exists = await Drive.exists(`${folder}/poster`)
+    if (exists) {
+        response.implicitEnd = false
+        response.header('Content-type', 'image/*')
+
+        const stream = await Drive.getStream(`${folder}/poster`)
+
+        stream.pipe(response.response)
+    } else {
+        return response.status(400).json({'error': "O parâmetro informado não existe"})
+    }
   }
 
   async showWhere({ params }) {
