@@ -208,9 +208,19 @@ class ShopController {
       response.implicitEnd = false
       response.header('Content-type', 'image/*')
 
-      const stream = await Drive.getStream(`${folder}/${shop.logo}`)
+      const exists = await Drive.exists(`${folder}/${shop.logo}`)
+      if (exists) {
+      try {       
+        const stream = await Drive.getStream(`${folder}/${shop.logo}`)
 
-      stream.pipe(response.response)
+        stream.pipe(response.response)
+      } catch (err) {
+          console.log("Algo deu errado", err)
+      }
+      }else {
+        return response.status(400).json({'error': "O parâmetro informado não existe"})
+      }
+      
   }
 
   async changePhoto({params, request, response}) {
@@ -368,9 +378,15 @@ class ShopController {
       response.implicitEnd = false
       response.header('Content-type', 'image/*')
 
-      const stream = await Drive.getStream(`${folder}/photo${params.photoId}`)
+      try {       
+        const stream = await Drive.getStream(`${folder}/photo${params.photoId}`)
 
-      stream.pipe(response.response)
+        stream.pipe(response.response)
+      } catch (err) {
+          console.log("Algo deu errado", err)
+      }
+
+      
     } else {
       return response.status(400).json({'error': "O parâmetro informado não existe"})
     }
@@ -510,18 +526,19 @@ async deletePhoto({params, response}) {
 //   return shop
 // }
 
-async showWhere({ params }) {
-  //console.log("chegou aqui",params)
-  //função que retorna valores no DB "where" tem um valor específico
-  let shop = null
-  if (params.query == 'all') {
-    //shop = await Shop.query().where('isOnline', true).orderBy('name','asc').fetch()
-    shop = await Shop.query().orderBy('name','asc').fetch()
-  } else {
-    shop = await Shop.query().where('category', params.query).andWhere('isOnline', true).orderBy('name','asc').fetch()
+  async showWhere({ params }) {
+    //console.log("chegou aqui",params)
+    //função que retorna valores no DB "where" tem um valor específico
+    let shop = null
+    if (params.query == 'all') {
+      //shop = await Shop.query().where('isOnline', true).orderBy('name','asc').fetch()
+      shop = await Shop.query().orderBy('name','asc').fetch()
+    } else {
+      shop = await Shop.query().where('category', params.query).andWhere('isOnline', true).orderBy('name','asc').fetch()
+      //console.log("chegou aqui",shop)
+    }
+    return shop
   }
-  return shop
-}
 
 }
 
